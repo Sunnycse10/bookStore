@@ -1,0 +1,12 @@
+#Development
+appsettings.Development.json
+
+
+bin/
+obj/
+
+
+*.http
+.vs/
+*.user
+*.suo
