@@ -1,4 +1,5 @@
-﻿using Book_App.DTOs;
+﻿using AutoMapper;
+using Book_App.DTOs;
 using Book_App.Models;
 using Book_App.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -11,13 +12,13 @@ namespace Book_App.Controllers
     [ApiController]
     public class authorsController : ControllerBase
     {
-        //private readonly BookService _bookService;
+        private readonly IMapper _mapper;
         private readonly IAuthorService _authorService;
 
-        public authorsController(IBookService bookService, IAuthorService authorService)
+        public authorsController(IAuthorService authorService, IMapper mapper)
         {
-          //  _bookService = bookService;
             _authorService = authorService;
+            _mapper = mapper;
         }
         // GET api/<authorsController>/5
         [HttpGet("{id}")]
@@ -25,13 +26,17 @@ namespace Book_App.Controllers
         {
             var author = await _authorService.GetAuthorById(id);
             if (author == null) { return NotFound(); }
-            else return Ok(new AuthorDTO
-            {
-                Id = author.Id,
-                Name = author.Name,
-                Books = author.Books.Select(b =>
-                    new BookInfoDTO { Id = b.Id, Title = b.Title, Price = b.Price }).ToList(),
-            });
+            var authorDTO = _mapper.Map<AuthorDTO>(author);
+
+            return Ok(authorDTO
+            //    new AuthorDTO
+            //{
+            //    Id = author.Id,
+            //    Name = author.Name,
+            //    Books = author.Books.Select(b =>
+            //        new BookInfoDTO { Id = b.Id, Title = b.Title, Price = b.Price }).ToList(),
+            //}
+                );
         }
         // POST api/<authorsController>
         [HttpPost]
@@ -54,10 +59,5 @@ namespace Book_App.Controllers
 
         }
 
-        // DELETE api/<authorsController>/5
-        //[HttpDelete("{id}")]
-        //public void Delete(int id)
-        //{
-        //}
     }
 }

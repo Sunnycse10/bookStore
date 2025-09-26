@@ -1,4 +1,5 @@
-﻿using Book_App.DTOs;
+﻿using AutoMapper;
+using Book_App.DTOs;
 using Book_App.Models;
 using Book_App.Services;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -11,25 +12,28 @@ namespace Book_App.Controllers
     public class booksController:ControllerBase
     {
         private readonly IBookService _bookService;
-        private readonly IAuthorService _authorService;
-        public booksController(IBookService bookService, IAuthorService authorService)
+        private readonly IMapper _mapper;
+        public booksController(IBookService bookService, IMapper mapper)
         {
             _bookService = bookService;
-            _authorService = authorService;
+            _mapper = mapper;
         }
         [HttpGet]
         public async Task<ActionResult<IEnumerable<BookDTO>>> GetAllBooks()
         {
             var books = await _bookService.GetAll();
-            return Ok(books.Select(b => new BookDTO
-            {
-                Id = b.Id,
-                Title = b.Title,
-                ISBN_10 = b.ISBN_10,
-                Authors = b.Authors.Select(a => new AuthorInfoDTO { Id = a.Id, Name = a.Name }).ToList(),
-                Categories = b.Categories.Select(c => new CategoryDTO { Id = c.Id, Title = c.Title }).ToList(),
-                Price = b.Price
-            }));
+            var bookDTOs= _mapper.Map<List<BookDTO>>(books); 
+            return Ok(bookDTOs
+            //    books.Select(b => new BookDTO
+            //{
+            //    Id = b.Id,
+            //    Title = b.Title,
+            //    ISBN_10 = b.ISBN_10,
+            //    Authors = b.Authors.Select(a => new AuthorInfoDTO { Id = a.Id, Name = a.Name }).ToList(),
+            //    Categories = b.Categories.Select(c => new CategoryDTO { Id = c.Id, Title = c.Title }).ToList(),
+            //    Price = b.Price
+            //})
+                );
         }
 
               
@@ -39,10 +43,12 @@ namespace Book_App.Controllers
         {
             var book = await _bookService.GetBookById(id);
             if(book == null) { return NotFound(); }
-            else return Ok(new BookDTO { Id= book.Id, Title=book.Title,
-                Authors = book.Authors.Select(b=> new AuthorInfoDTO { Id = b.Id, Name = b.Name }).ToList(),
-                Categories = book.Categories.Select(c => new CategoryDTO { Id=c.Id, Title = c.Title }).ToList(),
-                Price =book.Price});
+            var dto = _mapper.Map<BookDTO>(book);
+            return Ok(dto);
+            //else return Ok(new BookDTO { Id= book.Id, Title=book.Title,
+            //    Authors = book.Authors.Select(b=> new AuthorInfoDTO { Id = b.Id, Name = b.Name }).ToList(),
+            //    Categories = book.Categories.Select(c => new CategoryDTO { Id=c.Id, Title = c.Title }).ToList(),
+            //    Price =book.Price});
         }
         [HttpPost]
         public async Task<ActionResult<BookDTO>> CreateBook(CreateBookDTO bookDto)
@@ -50,20 +56,23 @@ namespace Book_App.Controllers
             
             var created = await _bookService.Add(bookDto);
             if (created == null) { return NotFound(); }
+            var bookDTO= _mapper.Map<BookDTO>(created);
 
-            return CreatedAtAction(nameof(GetBookById), new { id = created.Id }, new BookDTO
-            {
-                Id = created.Id,
-                ISBN_10 = created.ISBN_10,
-                Title = created.Title,
-                Price = created.Price,
-                Authors = created.Authors.Select(a=> new AuthorInfoDTO
-                {
-                    Id = a.Id,
-                    Name = a.Name
-                }).ToList(),
-                Categories= created.Categories.Select(a=> new CategoryDTO { Id=a.Id, Title=a.Title}).ToList()
-            });
+            return CreatedAtAction(nameof(GetBookById), new { id = created.Id }, bookDTO
+            //    new BookDTO
+            //{
+            //    Id = created.Id,
+            //    ISBN_10 = created.ISBN_10,
+            //    Title = created.Title,
+            //    Price = created.Price,
+            //    Authors = created.Authors.Select(a=> new AuthorInfoDTO
+            //    {
+            //        Id = a.Id,
+            //        Name = a.Name
+            //    }).ToList(),
+            //    Categories= created.Categories.Select(a=> new CategoryDTO { Id=a.Id, Title=a.Title}).ToList()
+            //}
+                );
         }
 
         [HttpGet("categories/{id}")]
@@ -71,9 +80,12 @@ namespace Book_App.Controllers
         {
             var category = await _bookService.GetCategoryById(id);
             if (category == null) { return NotFound(); }
-            return Ok(new CategoryWithBooksDTO { Id = category.Id, Title = category.Title ,
-                Books = category.Books.Select(b=> new BookInfoDTO
-                { Id=b.Id,Title=b.Title, ISBN_10=b.ISBN_10, Price=b.Price}).ToList()} );
+            var categoryDTO= _mapper.Map<CategoryDTO>(category);
+            return Ok( categoryDTO
+                //new CategoryWithBooksDTO { Id = category.Id, Title = category.Title ,
+                //Books = category.Books.Select(b=> new BookInfoDTO
+                //{ Id=b.Id,Title=b.Title, ISBN_10=b.ISBN_10, Price=b.Price}).ToList()}
+                );
 
         }
 
@@ -81,13 +93,16 @@ namespace Book_App.Controllers
         public async Task<ActionResult<IEnumerable<CategoryWithBooksDTO>>> GetAllCategeories()
         {
             var categories = await _bookService.GetAllCategories();
-            return Ok(categories.Select(c => new CategoryWithBooksDTO
-            {
-                Id = c.Id,
-                Title = c.Title,
-                Books = c.Books.Select(b => new BookInfoDTO
-                { Id = b.Id, Title = b.Title, ISBN_10 = b.ISBN_10, Price = b.Price }).ToList()
-            }));
+            var categoryDTOs = _mapper.Map<List<CategoryDTO>>(categories);
+            return Ok(categoryDTOs
+            //    categories.Select(c => new CategoryWithBooksDTO
+            //{
+            //    Id = c.Id,
+            //    Title = c.Title,
+            //    Books = c.Books.Select(b => new BookInfoDTO
+            //    { Id = b.Id, Title = b.Title, ISBN_10 = b.ISBN_10, Price = b.Price }).ToList()
+            //})
+                );
         }
 
 
@@ -105,19 +120,21 @@ namespace Book_App.Controllers
         public async Task<ActionResult<BookDTO>> UpdateBook(int id, CreateBookDTO book)
         {            
             var updated = await _bookService.Update(id,book);
-            return new BookDTO
-            {
-                Id = updated.Id,
-                ISBN_10 = updated.ISBN_10,
-                Title = updated.Title,
-                Price = updated.Price,
-                Authors = updated.Authors.Select(a => new AuthorInfoDTO
-                {
-                    Id = a.Id,
-                    Name = a.Name
-                }).ToList(),
-                Categories = updated.Categories.Select(a=> new CategoryDTO { Id=a.Id,Title=a.Title}).ToList(),
-            };
+            var updatedBookDTO = _mapper.Map<BookDTO>(updated);
+            return updatedBookDTO;
+            //    new BookDTO
+            //{
+            //    Id = updated.Id,
+            //    ISBN_10 = updated.ISBN_10,
+            //    Title = updated.Title,
+            //    Price = updated.Price,
+            //    Authors = updated.Authors.Select(a => new AuthorInfoDTO
+            //    {
+            //        Id = a.Id,
+            //        Name = a.Name
+            //    }).ToList(),
+            //    Categories = updated.Categories.Select(a=> new CategoryDTO { Id=a.Id,Title=a.Title}).ToList(),
+            //};
             
         }
 

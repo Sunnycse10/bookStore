@@ -77,8 +77,8 @@ namespace Book_App.Services
                 existingBook.Categories = categories;
                 _dbContext.Books.Update(existingBook);
                 await _dbContext.SaveChangesAsync();
-                await _dbContext.Entry(existingBook).Collection(b => b.Authors).LoadAsync();
-                await _dbContext.Entry(existingBook).Collection(b => b.Categories).LoadAsync();
+                //await _dbContext.Entry(existingBook).Collection(b => b.Authors).LoadAsync();
+                //await _dbContext.Entry(existingBook).Collection(b => b.Categories).LoadAsync();
             }
             
             return existingBook;
