@@ -23,7 +23,7 @@ namespace Book_App.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<AuthorDTO>> GetAuthorById(int id)
         {
-            var author = _authorService.GetAuthorById(id);
+            var author = await _authorService.GetAuthorById(id);
             if (author == null) { return NotFound(); }
             else return Ok(new AuthorDTO
             {
@@ -38,17 +38,21 @@ namespace Book_App.Controllers
         public async Task<ActionResult<AuthorInfoDTO>> CreateAuthor(CreateAuthorDTO author)
         {
             var newAuthor = new Author { Name = author.Name };
-            var created = _authorService.AddAuthor(newAuthor);
+            var created = await _authorService.AddAuthor(newAuthor);
             if (created == null) { return NotFound(); }
             return CreatedAtAction(nameof(GetAuthorById), new { id = created.Id },
                 new AuthorInfoDTO { Id=created.Id, Name=created.Name});
         }
 
         // PUT api/<authorsController>/5
-        //[HttpPut("{id}")]
-        //public void Put(int id, [FromBody] string value)
-        //{
-        //}
+        [HttpPut("{id}")]
+        public async Task<ActionResult<AuthorInfoDTO>> UpdateAuthor(int id, CreateAuthorDTO author)
+        {
+            var updated = await _authorService.UpdateAuthor(id, author);
+            if (updated == null) { return NotFound(); }
+            return Ok(new AuthorInfoDTO {Id=updated.Id, Name=updated.Name});
+
+        }
 
         // DELETE api/<authorsController>/5
         //[HttpDelete("{id}")]

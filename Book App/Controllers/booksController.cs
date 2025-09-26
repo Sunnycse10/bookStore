@@ -18,18 +18,26 @@ namespace Book_App.Controllers
             _authorService = authorService;
         }
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<BookDTO>>> GetAllBooks() =>
-            Ok(await _bookService.GetAll().Select(b => new BookDTO { Id = b.Id, Title = b.Title, ISBN_10=b.ISBN_10,
-                Authors = b.Authors.Select(a=>new AuthorInfoDTO { Id=a.Id, Name=a.Name}).ToList(),
-                Categories=b.Categories.Select(c=>new CategoryDTO {Id=c.Id, Title=c.Title }).ToList(),
-                Price=b.Price}));
+        public async Task<ActionResult<IEnumerable<BookDTO>>> GetAllBooks()
+        {
+            var books = await _bookService.GetAll();
+            return Ok(books.Select(b => new BookDTO
+            {
+                Id = b.Id,
+                Title = b.Title,
+                ISBN_10 = b.ISBN_10,
+                Authors = b.Authors.Select(a => new AuthorInfoDTO { Id = a.Id, Name = a.Name }).ToList(),
+                Categories = b.Categories.Select(c => new CategoryDTO { Id = c.Id, Title = c.Title }).ToList(),
+                Price = b.Price
+            }));
+        }
 
-        
+              
 
         [HttpGet("{id}")]
-        public ActionResult<BookDTO> GetBookById(int id)
+        public async Task<ActionResult<BookDTO>> GetBookById(int id)
         {
-            var book = _bookService.GetBookById(id);
+            var book = await _bookService.GetBookById(id);
             if(book == null) { return NotFound(); }
             else return Ok(new BookDTO { Id= book.Id, Title=book.Title,
                 Authors = book.Authors.Select(b=> new AuthorInfoDTO { Id = b.Id, Name = b.Name }).ToList(),
@@ -37,10 +45,10 @@ namespace Book_App.Controllers
                 Price =book.Price});
         }
         [HttpPost]
-        public ActionResult<BookDTO> CreateBook(CreateBookDTO bookDto)
+        public async Task<ActionResult<BookDTO>> CreateBook(CreateBookDTO bookDto)
         {
             
-            var created = _bookService.Add(bookDto);
+            var created = await _bookService.Add(bookDto);
             if (created == null) { return NotFound(); }
 
             return CreatedAtAction(nameof(GetBookById), new { id = created.Id }, new BookDTO
@@ -58,10 +66,10 @@ namespace Book_App.Controllers
             });
         }
 
-        [HttpGet("category/{id}")]
-        public ActionResult<CategoryWithBooksDTO> GetCategoryById(int id)
+        [HttpGet("categories/{id}")]
+        public async Task<ActionResult<CategoryWithBooksDTO>> GetCategoryById(int id)
         {
-            var category = _bookService.GetCategoryById(id);
+            var category = await _bookService.GetCategoryById(id);
             if (category == null) { return NotFound(); }
             return Ok(new CategoryWithBooksDTO { Id = category.Id, Title = category.Title ,
                 Books = category.Books.Select(b=> new BookInfoDTO
@@ -69,20 +77,34 @@ namespace Book_App.Controllers
 
         }
 
-        [HttpPost("category")]
-        public ActionResult<CategoryDTO> CreateCategory(CreateCategoryDTO createCategoryDTO)
+        [HttpGet("categories")]
+        public async Task<ActionResult<IEnumerable<CategoryWithBooksDTO>>> GetAllCategeories()
+        {
+            var categories = await _bookService.GetAllCategories();
+            return Ok(categories.Select(c => new CategoryWithBooksDTO
+            {
+                Id = c.Id,
+                Title = c.Title,
+                Books = c.Books.Select(b => new BookInfoDTO
+                { Id = b.Id, Title = b.Title, ISBN_10 = b.ISBN_10, Price = b.Price }).ToList()
+            }));
+        }
+
+
+        [HttpPost("categories")]
+        public async Task<ActionResult<CategoryDTO>> CreateCategory(CreateCategoryDTO createCategoryDTO)
         {
             var category = new Category { Title = createCategoryDTO.Title };
-            var created = _bookService.AddCategory(category);
+            var created = await _bookService.AddCategory(category);
             if (created == null) { return NotFound(); }
             return CreatedAtAction(nameof(GetCategoryById), new { id = category.Id }, new CategoryDTO { Id = created.Id, Title = created.Title });
             
         }
         
         [HttpPut("{id}")]
-        public ActionResult<BookDTO> UpdateBook(int id, CreateBookDTO book)
+        public async Task<ActionResult<BookDTO>> UpdateBook(int id, CreateBookDTO book)
         {            
-            var updated = _bookService.Update(id,book);
+            var updated = await _bookService.Update(id,book);
             return new BookDTO
             {
                 Id = updated.Id,
@@ -100,13 +122,12 @@ namespace Book_App.Controllers
         }
 
         [HttpDelete("{id}")]
-        public IActionResult DeleteBook(int id) 
-        {
-            if(_bookService.GetBookById(id) == null) {  return NotFound(); }
-            _bookService.DeleteById(id);
-            return NoContent();
+        public async Task<IActionResult> DeleteBook(int id) => await _bookService.DeleteById(id) ? NoContent() : NotFound();
+        
 
-        }
+        [HttpDelete("categories/{id}")]
+        public async Task<IActionResult> DeleteCategory(int id)=> await _bookService.DeleteCategoryById(id)? NoContent():NotFound();
+
 
 
 

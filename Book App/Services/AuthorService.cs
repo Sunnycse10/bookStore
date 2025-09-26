@@ -1,4 +1,5 @@
 ﻿using Book_App.Data;
+using Book_App.DTOs;
 using Book_App.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -6,9 +7,9 @@ namespace Book_App.Services
 {
     public interface IAuthorService
     {
-        Author GetAuthorById(int id);
-        Author AddAuthor(Author author);
-
+        Task<Author> GetAuthorById(int id);
+        Task<Author> AddAuthor(Author author);
+        Task<Author> UpdateAuthor(int id, CreateAuthorDTO author);
     }
     public class AuthorService: IAuthorService
     {
@@ -17,13 +18,26 @@ namespace Book_App.Services
         {
             _dbContext = context;
         }
-        public Author GetAuthorById(int id) => _dbContext.Authors.Include(a => a.Books).FirstOrDefault(a => a.Id == id);
+        public async Task<Author> GetAuthorById(int id) =>await  _dbContext.Authors.Include(a => a.Books).FirstOrDefaultAsync(a => a.Id == id);
 
-        public Author AddAuthor(Author author)
+        public async Task<Author> AddAuthor(Author author)
         {
             _dbContext.Authors.Add(author);
-            _dbContext.SaveChanges();
+            await _dbContext.SaveChangesAsync();
             return author;
+        }
+
+        public async Task<Author> UpdateAuthor(int id, CreateAuthorDTO author)
+        {
+            var existingAuthor = await GetAuthorById(id);
+            if (existingAuthor != null)
+            {
+                existingAuthor.Name = author.Name;
+                _dbContext.Authors.Update(existingAuthor);
+                await _dbContext.SaveChangesAsync();
+            }
+            
+            return existingAuthor;
         }
     }
 }
