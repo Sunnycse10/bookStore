@@ -14,7 +14,8 @@ namespace Book_App.Data
         public DbSet<Category> Categories { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            
+            modelBuilder.Entity<Book>().HasCheckConstraint("CK_Book_Price", "[Price] > 0");
+
         }
 
     }

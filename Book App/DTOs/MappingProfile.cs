@@ -19,6 +19,7 @@ namespace Book_App.DTOs
                 .ForMember(dest=>dest.Books, opt=>opt.MapFrom(src=>src.Books));
             CreateMap<Author, AuthorDTO>()
                 .ForMember(dest=>dest.Books, opt=>opt.MapFrom(src=>src.Books));
+            CreateMap<Book, BookInfoDTO>();
         }
     }
 }

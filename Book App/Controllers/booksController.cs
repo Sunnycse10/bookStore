@@ -80,7 +80,7 @@ namespace Book_App.Controllers
         {
             var category = await _bookService.GetCategoryById(id);
             if (category == null) { return NotFound(); }
-            var categoryDTO= _mapper.Map<CategoryDTO>(category);
+            var categoryDTO= _mapper.Map<CategoryWithBooksDTO>(category);
             return Ok( categoryDTO
                 //new CategoryWithBooksDTO { Id = category.Id, Title = category.Title ,
                 //Books = category.Books.Select(b=> new BookInfoDTO

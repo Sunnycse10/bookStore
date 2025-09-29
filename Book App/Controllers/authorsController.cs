@@ -42,6 +42,11 @@ namespace Book_App.Controllers
         [HttpPost]
         public async Task<ActionResult<AuthorInfoDTO>> CreateAuthor(CreateAuthorDTO author)
         {
+            //This is for unit test, not required for API test because of ApiController Attribute
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
             var newAuthor = new Author { Name = author.Name };
             var created = await _authorService.AddAuthor(newAuthor);
             if (created == null) { return NotFound(); }
