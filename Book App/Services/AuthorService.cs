@@ -1,43 +1,53 @@
-﻿using Book_App.Data;
+﻿using AutoMapper;
+using Book_App.Data;
 using Book_App.DTOs;
+using Book_App.Exceptions;
 using Book_App.Models;
+using Book_App.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 namespace Book_App.Services
 {
     public interface IAuthorService
     {
-        Task<Author> GetAuthorById(int id);
-        Task<Author> AddAuthor(Author author);
-        Task<Author> UpdateAuthor(int id, CreateAuthorDTO author);
+        Task<AuthorDTO> GetById(int id);
+        Task<AuthorInfoDTO> Add(CreateAuthorDTO author);
+        Task<AuthorInfoDTO> Update(int id, CreateAuthorDTO author);
     }
     public class AuthorService: IAuthorService
     {
-        private readonly AppDbContext _dbContext;
-        public AuthorService(AppDbContext context)
+        private IUnitOfWork UOW;
+        private readonly IMapper _mapper;
+        public AuthorService(IUnitOfWork uow, IMapper mapper)
         {
-            _dbContext = context;
+            UOW = uow;
+            _mapper = mapper;
         }
-        public async Task<Author> GetAuthorById(int id) =>await  _dbContext.Authors.Include(a => a.Books).FirstOrDefaultAsync(a => a.Id == id);
-
-        public async Task<Author> AddAuthor(Author author)
+        public async Task<AuthorDTO> GetById(int id)
         {
-            _dbContext.Authors.Add(author);
-            await _dbContext.SaveChangesAsync();
-            return author;
+            var author = await UOW.AuthorRepository.GetByIdWithBooks(id);
+            return author==null? throw new NotFoundException("Author not found") : _mapper.Map<AuthorDTO>(author);
         }
 
-        public async Task<Author> UpdateAuthor(int id, CreateAuthorDTO author)
+        public async Task<AuthorInfoDTO> Add(CreateAuthorDTO authorDTO)
         {
-            var existingAuthor = await GetAuthorById(id);
+            var author = new Author { Name=authorDTO.Name};
+            await UOW.AuthorRepository.AddAsync(author);
+            await UOW.Save();
+            return _mapper.Map<AuthorInfoDTO>(author);
+        }
+
+        public async Task<AuthorInfoDTO> Update(int id, CreateAuthorDTO author)
+        {
+            var existingAuthor = await UOW.AuthorRepository.GetByIdAsync(id);
             if (existingAuthor != null)
             {
                 existingAuthor.Name = author.Name;
-                _dbContext.Authors.Update(existingAuthor);
-                await _dbContext.SaveChangesAsync();
+                UOW.AuthorRepository.Update(existingAuthor);
+                await UOW.Save();
             }
             
-            return existingAuthor;
+            return _mapper.Map<AuthorInfoDTO>(existingAuthor);
         }
     }
 }
