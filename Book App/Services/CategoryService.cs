@@ -26,7 +26,7 @@ namespace Book_App.Services
         public async Task<CategoryWithBooksDTO> GetById(int id)
         {
 
-            var category = await UOW.CategoryRepository.GetByIdAsync(id);
+            var category = await UOW.CategoryRepository.GetByIdWithBooks(id);
             return category == null ? throw new NotFoundException("Category not found") : _mapper.Map<CategoryWithBooksDTO>(category);
         }
 
